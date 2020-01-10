@@ -1,0 +1,33 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Inedo.Data.CodeGenerator.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="DataFactoryType" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">SqlServerDataFactory</Value>
+    </Setting>
+    <Setting Name="StoredProcInfoPrefix" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ConnectionString" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Data Source=localhost; Initial Catalog=ProGet; Integrated Security=SSPI</Value>
+    </Setting>
+    <Setting Name="BaseNamespace" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Inedo.ProGet.Data</Value>
+    </Setting>
+    <Setting Name="DataContextType" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">SqlServerDatabaseContext</Value>
+    </Setting>
+    <Setting Name="UseYNIndicatorType" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="GenerateLegacyCodes" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="GenerateSqlStoredProcsShims" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="GenerateNonExtendedTables" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
