@@ -17,15 +17,6 @@
     <Setting Name="DataContextType" Type="System.String" Scope="Application">
       <Value Profile="(Default)">SqlServerDatabaseContext</Value>
     </Setting>
-    <Setting Name="UseYNIndicatorType" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="GenerateLegacyCodes" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">False</Value>
-    </Setting>
-    <Setting Name="GenerateSqlStoredProcsShims" Type="System.Boolean" Scope="Application">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
     <Setting Name="GenerateNonExtendedTables" Type="System.Boolean" Scope="Application">
       <Value Profile="(Default)">True</Value>
     </Setting>

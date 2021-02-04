@@ -4,15 +4,15 @@ namespace Inedo.Data.CodeGenerator
 {
     public sealed class StoredProcInfo
     {
-        private string nonHeritcalName;
+        private string normalizedName;
 
         public string Name
         {
-            get { return this.nonHeritcalName; }
+            get => this.normalizedName;
             set
             {
                 this.ActualName = value;
-                this.nonHeritcalName = value.Replace(" ", "_").Replace("-", "_");
+                this.normalizedName = value.Replace(" ", "_").Replace("-", "_");
             }
         }
         public string Description { get; set; }
@@ -20,7 +20,7 @@ namespace Inedo.Data.CodeGenerator
         public string[] TableNames { get; set; }
         public string[] OutputPropertyNames { get; set; }
         public string ReturnTypeName { get; set; }
-        public bool IsNameHeretical { get { return this.ActualName != this.nonHeritcalName; } }
+        public bool IsNameHeretical => this.ActualName != this.normalizedName;
         public string ActualName { get; private set; }
 
         public string FormatParams()

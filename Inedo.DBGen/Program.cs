@@ -38,11 +38,7 @@ namespace Inedo.Data.CodeGenerator
             var gens = new CodeGeneratorBase[]
             { 
                 new SqlContextGenerator(connect, connectionString, baseNamespace, dataContextType, sprocPrefix),
-                new SqlStoredProcsShimGenerator(connect, connectionString, baseNamespace, sprocPrefix),
-                new SqlStoredProcsGenerator(connect, connectionString, baseNamespace, dataFactoryType, sprocPrefix),
-                new SqlTableDefsGenerator(connect, connectionString, baseNamespace),
                 new SqlTableGenerator(connect, connectionString, baseNamespace),
-                new SqlTableNamesGenerator(connect, connectionString, baseNamespace),
                 new SqlEventTypesGenerator(connect, connectionString, baseNamespace)
             };
 

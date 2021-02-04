@@ -1,6 +1,6 @@
 ﻿namespace Inedo.Data.CodeGenerator
 {
-    public struct EventTypeDetail
+    public sealed class EventTypeDetail
     {
         public string Name { get; set; }
         public string Type { get; set; }

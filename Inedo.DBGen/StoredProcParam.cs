@@ -2,14 +2,14 @@
 
 namespace Inedo.Data.CodeGenerator
 {
-    public struct StoredProcParam
+    public sealed class StoredProcParam
     {
-        public string Name;
+        public string Name { get; set; }
         public string DnName => this.Name?.TrimStart('@');
-        public ParameterDirection Direction;
-        public DbType DbType;
-        public int Length;
-        public string DnType;
-        public bool HasDefault;
+        public ParameterDirection Direction { get; set; }
+        public DbType DbType { get; set; }
+        public int Length { get; set; }
+        public string DnType { get; set; }
+        public bool HasDefault { get; set; }
     }
 }

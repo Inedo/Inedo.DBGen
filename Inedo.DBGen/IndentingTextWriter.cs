@@ -7,7 +7,7 @@ namespace Inedo.Data.CodeGenerator
     internal sealed class IndentingTextWriter : TextWriter
     {
         private static readonly UTF8Encoding utf8 = new UTF8Encoding(false);
-        private TextWriter writer;
+        private readonly TextWriter writer;
         private bool newline = true;
 
         public IndentingTextWriter(TextWriter writer)
@@ -67,7 +67,7 @@ namespace Inedo.Data.CodeGenerator
                     if (this.newline)
                     {
                         this.writer.Write(new string(' ', this.Indent * 4));
-                        newline = false;
+                        this.newline = false;
                     }
 
                     this.writer.WriteLine(lines[i]);
@@ -77,7 +77,7 @@ namespace Inedo.Data.CodeGenerator
                 if (this.newline)
                 {
                     this.writer.Write(new string(' ', this.Indent * 4));
-                    newline = false;
+                    this.newline = false;
                 }
 
                 this.writer.Write(lines[lines.Length - 1]);
@@ -87,7 +87,7 @@ namespace Inedo.Data.CodeGenerator
                 if (this.newline)
                 {
                     this.writer.Write(new string(' ', this.Indent * 4));
-                    newline = false;
+                    this.newline = false;
                 }
 
                 this.writer.Write(value);

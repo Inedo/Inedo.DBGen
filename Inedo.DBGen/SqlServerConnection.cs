@@ -182,7 +182,7 @@ ORDER BY R.ROUTINE_NAME");
 
         private static string GetDotNetTypeName(SqlParameter parameter)
         {
-            if (Properties.Settings.Default.UseYNIndicatorType && parameter.ParameterName.EndsWith("_Indicator"))
+            if (parameter.ParameterName.EndsWith("_Indicator"))
                 return "YNIndicator?";
             else
                 return GetDotNetTypeName(parameter.SqlDbType);
@@ -319,7 +319,7 @@ ORDER BY R.ROUTINE_NAME");
         {
             bool nullable = column["IS_NULLABLE"].ToString() == "YES";
 
-            if (Properties.Settings.Default.UseYNIndicatorType && column["COLUMN_NAME"].ToString().EndsWith("_Indicator"))
+            if (column["COLUMN_NAME"].ToString().EndsWith("_Indicator"))
                 return nullable ? "YNIndicator?" : "YNIndicator";
 
             switch (column["DATA_TYPE"].ToString())

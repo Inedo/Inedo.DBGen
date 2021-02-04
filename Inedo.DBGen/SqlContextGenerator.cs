@@ -4,11 +4,21 @@ using System.Xml.Linq;
 
 namespace Inedo.Data.CodeGenerator
 {
-    internal class SqlContextGenerator : SqlStoredProcsGeneratorBase
+    internal class SqlContextGenerator : CodeGeneratorBase
     {
+        private readonly Lazy<StoredProcInfo[]> storedProcsLazy;
+
         public SqlContextGenerator(ConnectToDatabase connect, string connectionString, string baseNamespace, string dataContextType, string storedProcPrefix)
-            : base(connect, connectionString, baseNamespace, storedProcPrefix)
+            : base(connect, connectionString, baseNamespace)
         {
+            this.storedProcsLazy = new Lazy<StoredProcInfo[]>(() =>
+            {
+                using (var connection = this.CreateConnection())
+                {
+                    return connection.GetStoredProcs(storedProcPrefix);
+                }
+            });
+
             this.DataContextType = dataContextType;
         }
 
@@ -16,6 +26,7 @@ namespace Inedo.Data.CodeGenerator
 
         public override string FileName => "DB.cs";
         public string DataContextType { get; }
+        public StoredProcInfo[] StoredProcs => this.storedProcsLazy.Value;
 
         protected override void WriteBody(IndentingTextWriter writer)
         {

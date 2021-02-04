@@ -1,15 +1,28 @@
-﻿using Inedo.Data.CodeGenerator.Properties;
+﻿using System;
+using System.Collections.Generic;
+using Inedo.Data.CodeGenerator.Properties;
 
 namespace Inedo.Data.CodeGenerator
 {
-    internal sealed class SqlTableGenerator : SqlTableGeneratorBase
+    internal sealed class SqlTableGenerator : CodeGeneratorBase
     {
+        private readonly Lazy<Dictionary<string, TableInfo>> tables;
+
         public SqlTableGenerator(ConnectToDatabase connect, string connectionString, string baseNamespace)
             : base(connect, connectionString, baseNamespace)
         {
+            this.tables = new Lazy<Dictionary<string, TableInfo>>(() =>
+            {
+                using (var connection = this.CreateConnection())
+                {
+                    return connection.GetTables();
+                }
+            });
         }
 
         public override string FileName => "Tables.cs";
+
+        private Dictionary<string, TableInfo> Tables => this.tables.Value;
 
         protected override void WriteBody(IndentingTextWriter writer)
         {

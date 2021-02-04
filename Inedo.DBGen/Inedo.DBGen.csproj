@@ -58,13 +58,7 @@
     <Compile Include="SqlContextGenerator.cs" />
     <Compile Include="SqlEventTypesGenerator.cs" />
     <Compile Include="SqlServerConnection.cs" />
-    <Compile Include="SqlStoredProcsGenerator.cs" />
-    <Compile Include="SqlStoredProcsGeneratorBase.cs" />
-    <Compile Include="SqlStoredProcsShimGenerator.cs" />
-    <Compile Include="SqlTableDefsGenerator.cs" />
     <Compile Include="SqlTableGenerator.cs" />
-    <Compile Include="SqlTableGeneratorBase.cs" />
-    <Compile Include="SqlTableNamesGenerator.cs" />
     <Compile Include="StoredProcInfo.cs" />
     <Compile Include="StoredProcParam.cs" />
     <Compile Include="TableColumnInfo.cs" />

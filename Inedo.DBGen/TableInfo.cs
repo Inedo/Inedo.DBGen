@@ -10,8 +10,8 @@ namespace Inedo.Data.CodeGenerator
             this.Name = name;
         }
 
-        public string Name { get; private set; }
-        public List<TableColumnInfo> Columns { get; private set; }
-        public string SafeName { get { return this.Name.Replace(" - ", "_").Replace(" ", "_").Replace("-", "_").Replace(".", "_"); } }
+        public string Name { get; }
+        public List<TableColumnInfo> Columns { get;  }
+        public string SafeName => this.Name.Replace(" - ", "_").Replace(" ", "_").Replace("-", "_").Replace(".", "_");
     }
 }

@@ -20,7 +20,7 @@ namespace Inedo.Data.CodeGenerator
 
         public virtual void GenerateCodeFile(FileStream file)
         {
-            using (IndentingTextWriter writer = CreateWriter(file))
+            using (IndentingTextWriter writer = this.CreateWriter(file))
             {
                 this.WriteHeader(writer);
                 this.WriteBody(writer);
