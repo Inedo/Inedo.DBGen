@@ -8,15 +8,13 @@ namespace Inedo.Data.CodeGenerator
     {
         private readonly Lazy<StoredProcInfo[]> storedProcsLazy;
 
-        public SqlContextGenerator(ConnectToDatabase connect, string connectionString, string baseNamespace, string dataContextType, string storedProcPrefix)
+        public SqlContextGenerator(Func<string, SqlServerConnection> connect, string connectionString, string baseNamespace, string dataContextType, string storedProcPrefix)
             : base(connect, connectionString, baseNamespace)
         {
             this.storedProcsLazy = new Lazy<StoredProcInfo[]>(() =>
             {
-                using (var connection = this.CreateConnection())
-                {
-                    return connection.GetStoredProcs(storedProcPrefix);
-                }
+                using var connection = this.CreateConnection();
+                return connection.GetStoredProcs(storedProcPrefix);
             });
 
             this.DataContextType = dataContextType;
@@ -54,11 +52,11 @@ namespace Inedo.Data.CodeGenerator
             writer.Indent++;
 
             foreach (var proc in procs)
-                this.WriteSpMethod(writer, proc, true);
+                WriteSpMethod(writer, proc, true);
 
             this.WriteContextClass(writer, procs);
 
-            this.WriteSpOutputsClass(writer, procs);
+            WriteSpOutputsClass(writer, procs);
 
             writer.Indent--;
             writer.WriteLine('}');
@@ -85,14 +83,14 @@ namespace Inedo.Data.CodeGenerator
 
             foreach (var proc in procs)
             {
-                this.WriteSpMethod(writer, proc);
-                this.WriteAsyncInstanceMethod(writer, proc);
+                WriteSpMethod(writer, proc);
+                WriteAsyncInstanceMethod(writer, proc);
             }
 
             writer.Indent--;
             writer.WriteLine('}');
         }
-        private void WriteSpMethod(IndentingTextWriter writer, StoredProcInfo proc, bool staticMethod = false)
+        private static void WriteSpMethod(IndentingTextWriter writer, StoredProcInfo proc, bool staticMethod = false)
         {
             var returnType = GetReturnType(proc, staticMethod);
 
@@ -219,7 +217,7 @@ namespace Inedo.Data.CodeGenerator
             writer.WriteLine('}');
         }
 
-        private void WriteSpOutputsClass(IndentingTextWriter writer, StoredProcInfo[] procs)
+        private static void WriteSpOutputsClass(IndentingTextWriter writer, StoredProcInfo[] procs)
         {
             writer.WriteLine("public static class Outputs");
             writer.WriteLine('{');
@@ -243,7 +241,7 @@ namespace Inedo.Data.CodeGenerator
             writer.WriteLine('}');
         }
 
-        private void WriteAsyncInstanceMethod(IndentingTextWriter writer, StoredProcInfo proc)
+        private static void WriteAsyncInstanceMethod(IndentingTextWriter writer, StoredProcInfo proc)
         {
             var returnType = GetReturnType(proc, true);
 

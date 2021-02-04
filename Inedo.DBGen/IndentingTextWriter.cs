@@ -80,7 +80,7 @@ namespace Inedo.Data.CodeGenerator
                     this.newline = false;
                 }
 
-                this.writer.Write(lines[lines.Length - 1]);
+                this.writer.Write(lines[^1]);
             }
             else
             {

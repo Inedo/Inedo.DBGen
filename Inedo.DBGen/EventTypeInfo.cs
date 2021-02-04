@@ -2,8 +2,8 @@
 {
     public sealed class EventTypeInfo
     {
-        public string Code { get; set; }
-        public string Description { get; set; }
-        public EventTypeDetail[] Details { get; set; }
+        public string Code { get; init; }
+        public string Description { get; init; }
+        public EventTypeDetail[] Details { get; init; }
     }
 }

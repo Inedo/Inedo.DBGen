@@ -6,26 +6,26 @@ namespace Inedo.Data.CodeGenerator
 {
     internal abstract class CodeGeneratorBase
     {
-        protected CodeGeneratorBase(ConnectToDatabase connect, string connectionString, string baseNamespace)
+        protected CodeGeneratorBase(Func<string, SqlServerConnection> connect, string connectionString, string baseNamespace)
         {
             this.Connect = connect;
             this.ConnectionString = connectionString;
             this.BaseNamespace = baseNamespace;
         }
 
+        public abstract string FileName { get; }
+
         protected string ConnectionString { get; set; }
         protected string BaseNamespace { get; set; }
-        public abstract string FileName { get; }
-        private ConnectToDatabase Connect { get; }
+
+        private Func<string, SqlServerConnection> Connect { get; }
 
         public virtual void GenerateCodeFile(FileStream file)
         {
-            using (IndentingTextWriter writer = this.CreateWriter(file))
-            {
-                this.WriteHeader(writer);
-                this.WriteBody(writer);
-                this.WriteFooter(writer);
-            }
+            using IndentingTextWriter writer = this.CreateWriter(file);
+            this.WriteHeader(writer);
+            this.WriteBody(writer);
+            this.WriteFooter(writer);
         }
 
         protected virtual IndentingTextWriter CreateWriter(FileStream file)
@@ -59,7 +59,7 @@ namespace Inedo.Data.CodeGenerator
         {
         }
 
-        protected IDatabaseConnection CreateConnection()
+        protected SqlServerConnection CreateConnection()
         {
             if (string.IsNullOrEmpty(this.ConnectionString)) 
                 throw new InvalidOperationException("There is no default connection string set for this object.");

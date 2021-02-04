@@ -8,15 +8,13 @@ namespace Inedo.Data.CodeGenerator
     {
         private readonly Lazy<Dictionary<string, TableInfo>> tables;
 
-        public SqlTableGenerator(ConnectToDatabase connect, string connectionString, string baseNamespace)
+        public SqlTableGenerator(Func<string, SqlServerConnection> connect, string connectionString, string baseNamespace)
             : base(connect, connectionString, baseNamespace)
         {
             this.tables = new Lazy<Dictionary<string, TableInfo>>(() =>
             {
-                using (var connection = this.CreateConnection())
-                {
-                    return connection.GetTables();
-                }
+                using var connection = this.CreateConnection();
+                return connection.GetTables();
             });
         }
 

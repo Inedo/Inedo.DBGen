@@ -9,19 +9,19 @@ namespace Inedo.Data.CodeGenerator
         public string Name
         {
             get => this.normalizedName;
-            set
+            init
             {
                 this.ActualName = value;
                 this.normalizedName = value.Replace(" ", "_").Replace("-", "_");
             }
         }
-        public string Description { get; set; }
-        public StoredProcParam[] Params { get; set; }
-        public string[] TableNames { get; set; }
-        public string[] OutputPropertyNames { get; set; }
-        public string ReturnTypeName { get; set; }
+        public string Description { get; init; }
+        public StoredProcParam[] Params { get; init; }
+        public string[] TableNames { get; init; }
+        public string[] OutputPropertyNames { get; init; }
+        public string ReturnTypeName { get; init; }
         public bool IsNameHeretical => this.ActualName != this.normalizedName;
-        public string ActualName { get; private set; }
+        public string ActualName { get; init; }
 
         public string FormatParams()
         {

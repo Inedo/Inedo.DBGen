@@ -6,15 +6,13 @@ namespace Inedo.Data.CodeGenerator
     {
         private readonly Lazy<EventTypeInfo[]> eventsLazy;
 
-        public SqlEventTypesGenerator(ConnectToDatabase connect, string connectionString, string baseNamespace)
+        public SqlEventTypesGenerator(Func<string, SqlServerConnection> connect, string connectionString, string baseNamespace)
             : base(connect, connectionString, baseNamespace)
         {
             this.eventsLazy = new Lazy<EventTypeInfo[]>(() =>
             {
-                using (var connection = this.CreateConnection())
-                {
-                    return connection.GetEvents();
-                }
+                using var connection = this.CreateConnection();
+                return connection.GetEvents();
             });
         }
 

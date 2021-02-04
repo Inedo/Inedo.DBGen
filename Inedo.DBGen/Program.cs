@@ -8,9 +8,8 @@ namespace Inedo.Data.CodeGenerator
     {
         private static readonly ConsoleColor DefaultColor = Console.ForegroundColor;
 
-        public static void Main(string[] args)
+        public static void Main()
         {
-            var connect = SqlServerConnection.Connect;
             var connectionString = Settings.Default.ConnectionString;
             var baseNamespace = Settings.Default.BaseNamespace;
             var dataFactoryType = Settings.Default.DataFactoryType;
@@ -37,9 +36,9 @@ namespace Inedo.Data.CodeGenerator
 
             var gens = new CodeGeneratorBase[]
             { 
-                new SqlContextGenerator(connect, connectionString, baseNamespace, dataContextType, sprocPrefix),
-                new SqlTableGenerator(connect, connectionString, baseNamespace),
-                new SqlEventTypesGenerator(connect, connectionString, baseNamespace)
+                new SqlContextGenerator(c => new SqlServerConnection(c), connectionString, baseNamespace, dataContextType, sprocPrefix),
+                new SqlTableGenerator(c => new SqlServerConnection(c), connectionString, baseNamespace),
+                new SqlEventTypesGenerator(c => new SqlServerConnection(c), connectionString, baseNamespace)
             };
 
             foreach (var gen in gens)
@@ -49,6 +48,7 @@ namespace Inedo.Data.CodeGenerator
                     Console.WriteLine("Skipping " + gen.FileName);
                     continue;
                 }
+
                 var fileName = gen.FileName;
                 if (TryOpenFile(fileName, out FileStream fs))
                 {
