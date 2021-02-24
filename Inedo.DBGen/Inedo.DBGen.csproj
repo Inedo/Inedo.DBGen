@@ -1,17 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <Title>Inedo.DBGen</Title>
     <Authors>Inedo</Authors>
     <Company>Inedo</Company>
     <Product>Inedo.DBGen</Product>
     <Description></Description>
     <Copyright>Copyright © Inedo 2021</Copyright>
-    <ApplicationIcon />
     <OutputType>Exe</OutputType>
-    <StartupObject />
     <RootNamespace>Inedo.Data.CodeGenerator</RootNamespace>
-    <AssemblyName>SqlGen</AssemblyName>
+    <AssemblyName>sqlgen</AssemblyName>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="Properties\Settings.Designer.cs">
@@ -24,9 +23,5 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="5.0.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
   </ItemGroup>
 </Project>
