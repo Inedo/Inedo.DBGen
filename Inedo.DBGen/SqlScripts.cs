@@ -3,25 +3,79 @@
     internal static class SqlScripts
     {
         public const string GetTablesQuery = @"
-SELECT TABLE_NAME, COLUMN_NAME, IS_NULLABLE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
-  FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME NOT LIKE '!_!_%' ESCAPE '!'
- ORDER BY TABLE_NAME, COLUMN_NAME
-";
+SELECT tab.name,
+	   c.name,
+	   c.is_nullable,
+	   CASE WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name ELSE t2.name END,
+	   c.max_length
+  FROM sys.columns c
+       INNER JOIN sys.tables tab
+	           ON tab.object_id = c.object_id
+	   INNER JOIN sys.types t
+	           ON c.user_type_id = t.user_type_id
+	    LEFT JOIN sys.types t2
+	           ON t2.system_type_id = t.system_type_id
+			  AND t2.user_type_id = t2.system_type_id
+ WHERE LEFT(tab.name, 2) <> '__'
+ ORDER BY tab.name, c.name";
 
         public const string GetStoredProcsQuery = @"
-SELECT [StoredProc_Name] = R.ROUTINE_NAME
-      ,SPI.[ReturnType_Name]
-      ,SPI.[DataTableNames_Csv]
-      ,SPI.[OutputPropertyNames_Csv]
-      ,SPI.[Description_Text]
-      ,SPI.[Remarks_Text]
-      ,R.[Routine_Definition]
- FROM INFORMATION_SCHEMA.ROUTINES R
-      LEFT JOIN [{0}__StoredProcInfo] SPI
-             ON R.ROUTINE_NAME = SPI.[StoredProc_Name]
-WHERE R.ROUTINE_NAME NOT IN('Events_RaiseEvent', 'HandleError')
-  AND R.ROUTINE_TYPE = 'PROCEDURE'
-  AND LEFT(R.ROUTINE_NAME, 2) <> '__'
-ORDER BY R.ROUTINE_NAME";
+SELECT p.object_id,
+       p.name,
+	   m.definition,
+	   SPI.[ReturnType_Name],
+	   SPI.[DataTableNames_Csv],
+	   SPI.[OutputPropertyNames_Csv],
+	   SPI.[Description_Text],
+	   SPI.[Remarks_Text]
+  FROM sys.procedures p
+       INNER JOIN sys.sql_modules m
+	           ON p.object_id = m.object_id
+	   LEFT JOIN __StoredProcInfo SPI
+	          ON SPI.[StoredProc_Name] = p.name
+ WHERE LEFT(name, 2) <> '__'
+ ORDER BY name";
+
+		public const string GetStoredProcParamsQuery = @"
+SELECT p.object_id,
+       RIGHT(p.name, LEN(p.name) - 1),
+       p.max_length,
+	   CASE WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name ELSE t2.name END,
+	   t.is_table_type,
+	   p.is_output
+  FROM sys.parameters p
+	   INNER JOIN sys.types t
+	           ON p.user_type_id = t.user_type_id
+	    LEFT JOIN sys.types t2
+	           ON t2.system_type_id = t.system_type_id
+			  AND t2.user_type_id = t2.system_type_id
+ WHERE p.name <> ''
+ ORDER BY p.object_id, p.parameter_id";
+
+        public const string GetUserDefinedTables = @"
+SELECT type_table_object_id,
+       name
+  FROM sys.table_types
+ WHERE is_user_defined = 1
+   AND is_table_type = 1
+ ORDER BY name";
+
+        public const string GetUserDefinedTableColumns = @"
+SELECT c.object_id,
+	   c.name,
+	   CASE WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name ELSE t2.name END,
+	   c.max_length,
+	   c.is_nullable
+  FROM sys.columns c
+       INNER JOIN sys.table_types tt
+	           ON c.object_id = tt.type_table_object_id
+	   INNER JOIN sys.types t
+	           ON c.user_type_id = t.user_type_id
+	    LEFT JOIN sys.types t2
+	           ON t2.system_type_id = t.system_type_id
+			  AND t2.user_type_id = t2.system_type_id
+ WHERE tt.is_user_defined = 1
+   AND tt.is_table_type = 1
+ ORDER BY c.object_id, c.column_id";
     }
 }

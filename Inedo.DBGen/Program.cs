@@ -1,25 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Inedo.Data.CodeGenerator.Properties;
+using Microsoft.Data.SqlClient;
 
 namespace Inedo.Data.CodeGenerator
 {
     public static class Program
     {
-        private static readonly Regex DefaultArgRegex = new Regex(@"\bCREATE\s+PROCEDURE\s+[^\(]+\((\s*(?<1>@\S+)\s+[a-zA-Z0-9_]+(\([a-zA-Z0-9,]+\))?(?<2>(\s*=\s*[^\s,\)]+)?)\s*(OUT)?\s*,?)*\)\s*AS\s+BEGIN\b", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex DefaultArgRegex = new(@"\bCREATE\s+PROCEDURE\s+[^\(]+\((\s*(?<1>@\S+)\s+[a-zA-Z0-9_]+(\([a-zA-Z0-9,]+\))?(?<2>(\s*=\s*[^\s,\)]+)?)\s*(OUT)?\s*,?)*\)\s*AS\s+BEGIN\b", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
-        public static int Main()
+        public static int Main(string[] args)
         {
-            var connectionString = Settings.Default.ConnectionString;
+            var connectionString = readArg("connection-string");
             if (string.IsNullOrWhiteSpace(connectionString))
             {
-                Console.Error.WriteLine("ConnectionString not set in config file.");
+                Console.Error.WriteLine("Missing --connection-string=<connection string> argument.");
                 return -1;
             }
 
@@ -27,14 +25,25 @@ namespace Inedo.Data.CodeGenerator
             WriteSchemaFile("DbSchema.xml", connectionString);
             Console.WriteLine("done");
             return 0;
+
+            string readArg(string name)
+            {
+                var value = $"--{name}=";
+
+                foreach (var a in args)
+                {
+                    if(a.StartsWith(value))
+                        return a[value.Length..];
+                }
+
+                return null;
+            }
         }
 
         private static void WriteSchemaFile(string fileName, string connectionString)
         {
             using var conn = new SqlConnection(connectionString);
             conn.Open();
-            using var conn2 = new SqlConnection(connectionString);
-            conn2.Open();
 
             using var writer = XmlWriter.Create(
                 fileName,
@@ -53,18 +62,28 @@ namespace Inedo.Data.CodeGenerator
             using (var cmd = new SqlCommand(SqlScripts.GetTablesQuery, conn))
             using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
             {
-                WriteTablesXml(writer, reader);
+                WriteTables(writer, reader);
             }
 
-            using (var cmd = new SqlCommand(string.Format(SqlScripts.GetStoredProcsQuery, Settings.Default.StoredProcInfoPrefix), conn))
+            var storedProcParams = ReadStoredProcParams(conn);
+
+            using (var cmd = new SqlCommand(SqlScripts.GetStoredProcsQuery, conn))
             using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
             {
-                WriteStoredProcsXml(writer, reader, conn2);
+                WriteStoredProcs(writer, reader, storedProcParams);
+            }
+
+            var userTableColumns = ReadUserDefinedTableColumns(conn);
+
+            using (var cmd = new SqlCommand(SqlScripts.GetUserDefinedTables, conn))
+            using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
+            {
+                WriteUserDefinedTables(writer, reader, userTableColumns);
             }
 
             writer.WriteEndElement(); // InedoSqlSchema
         }
-        private static void WriteTablesXml(XmlWriter writer, SqlDataReader reader)
+        private static void WriteTables(XmlWriter writer, SqlDataReader reader)
         {
             writer.WriteStartElement("Tables");
 
@@ -84,13 +103,19 @@ namespace Inedo.Data.CodeGenerator
                 }
 
                 writer.WriteStartElement(reader.GetString(TableOrdinals.ColumnName));
-                if (reader.GetString(TableOrdinals.Nullable) == "YES")
+
+                bool nullable = reader.GetBoolean(TableOrdinals.Nullable);
+                var columnType = reader.GetString(TableOrdinals.DataType);
+                int maxLength = reader.GetInt16(TableOrdinals.MaxLength);
+
+                var dataType = new DataType(columnType, maxLength, nullable);
+
+                if (dataType.Nullable)
                     writer.WriteAttributeString("Nullable", "true");
 
-                writer.WriteAttributeString("Type", reader.GetString(TableOrdinals.DataType));
-                int? length = reader.GetNullableInt32(TableOrdinals.MaxLength);
-                if (length.HasValue && length != -1)
-                    writer.WriteAttributeString("Length", length.GetValueOrDefault().ToString());
+                writer.WriteAttributeString("Type", dataType.ToString());
+                if (dataType.MaxLength > 0)
+                    writer.WriteAttributeString("Length", dataType.MaxLength.ToString());
 
                 writer.WriteEndElement(); // current column name
             }
@@ -100,72 +125,148 @@ namespace Inedo.Data.CodeGenerator
 
             writer.WriteEndElement(); // Tables
         }
-        private static void WriteStoredProcsXml(XmlWriter writer, SqlDataReader reader, SqlConnection secondConnection)
+        private static Dictionary<int, List<UserDefinedTableTypeColumnInfo>> ReadUserDefinedTableColumns(SqlConnection conn)
+        {
+            using var cmd = new SqlCommand(SqlScripts.GetUserDefinedTableColumns, conn);
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            var columns = new Dictionary<int, List<UserDefinedTableTypeColumnInfo>>();
+
+            while (reader.Read())
+            {
+                int tableId = reader.GetInt32(UserDefinedTableColumnOrdinals.TableId);
+                var columnName = reader.GetString(UserDefinedTableColumnOrdinals.ColumnName);
+                var typeName = reader.GetString(UserDefinedTableColumnOrdinals.TypeName);
+                int maxLength = reader.GetInt16(UserDefinedTableColumnOrdinals.MaxLength);
+                bool nullable = reader.GetBoolean(UserDefinedTableColumnOrdinals.Nullable);
+
+                if (!columns.TryGetValue(tableId, out var tableColumns))
+                {
+                    tableColumns = new();
+                    columns.Add(tableId, tableColumns);
+                }
+
+                tableColumns.Add(new UserDefinedTableTypeColumnInfo(columnName, new DataType(typeName, maxLength, nullable)));
+            }
+
+            return columns;
+        }
+        private static void WriteUserDefinedTables(XmlWriter writer, SqlDataReader reader, Dictionary<int, List<UserDefinedTableTypeColumnInfo>> columnLookup)
+        {
+            writer.WriteStartElement("TableTypes");
+
+            while (reader.Read())
+            {
+                int tableId = reader.GetInt32(UserDefinedTableOrdinals.TableId);
+                var tableName = reader.GetString(UserDefinedTableOrdinals.TableName);
+
+                writer.WriteStartElement(tableName);
+
+                if (columnLookup.TryGetValue(tableId, out var columns))
+                {
+                    foreach (var c in columns)
+                    {
+                        writer.WriteStartElement(c.Name);
+
+                        writer.WriteAttributeString("Type", c.Type.ToString());
+                        if (c.Type.MaxLength > 0)
+                            writer.WriteAttributeString("Length", c.Type.MaxLength.ToString());
+                        if (c.Type.Nullable)
+                            writer.WriteAttributeString("Nullable", c.Type.Nullable.ToString());
+
+                        writer.WriteEndElement(); // column name
+                    }
+                }
+
+                writer.WriteEndElement(); // table name
+            }
+
+            writer.WriteEndElement(); // TableTypes
+        }
+        private static Dictionary<int, List<StoredProcParamInfo>> ReadStoredProcParams(SqlConnection conn)
+        {
+            using var cmd = new SqlCommand(SqlScripts.GetStoredProcParamsQuery, conn);
+            using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+
+            var parameters = new Dictionary<int, List<StoredProcParamInfo>>();
+
+            while (reader.Read())
+            {
+                int objectId = reader.GetInt32(StoredProcParamOrdinals.ObjectId);
+                var paramName = reader.GetString(StoredProcParamOrdinals.Name);
+                int maxLength = reader.GetInt16(StoredProcParamOrdinals.MaxLength);
+                var typeName = reader.GetString(StoredProcParamOrdinals.Type);
+                bool tableType = reader.GetBoolean(StoredProcParamOrdinals.TableType);
+                bool output = reader.GetBoolean(StoredProcParamOrdinals.Output);
+
+                if (!parameters.TryGetValue(objectId, out var paramList))
+                {
+                    paramList = new();
+                    parameters.Add(objectId, paramList);
+                }
+
+                paramList.Add(new StoredProcParamInfo(paramName, new DataType(typeName, maxLength, true, tableType), output));
+            }
+
+            return parameters;
+        }
+        private static void WriteStoredProcs(XmlWriter writer, SqlDataReader reader, Dictionary<int, List<StoredProcParamInfo>> paramLookup)
         {
             writer.WriteStartElement("StoredProcedures");
 
             while (reader.Read())
             {
-                var storedProcName = reader.GetString(StoredProcOrdinals.StoredProcName);
-                writer.WriteStartElement(storedProcName);
+                int objectId = reader.GetInt32(StoredProcOrdinals.ObjectId);
+                var procName = reader.GetString(StoredProcOrdinals.Name);
+                var definition = reader.GetNullableString(StoredProcOrdinals.Definition);
+                var returnType = reader.GetNullableString(StoredProcOrdinals.ReturnType);
+                var dataTableNames = reader.GetNullableString(StoredProcOrdinals.DataTableNames);
+                var description = reader.GetNullableString(StoredProcOrdinals.Description);
+                var remarks = reader.GetNullableString(StoredProcOrdinals.Remarks);
 
-                var returnType = reader.GetNullableString(StoredProcOrdinals.ReturnTypeName);
+                var defaults = GetOptionalParameters(definition);
+
+                writer.WriteStartElement(procName);
+
                 if (returnType != null && !returnType.Equals("void", StringComparison.OrdinalIgnoreCase))
                     writer.WriteAttributeString("ReturnType", returnType);
 
-                var dataTableNames = reader.GetNullableString(StoredProcOrdinals.DataTableNamesCsv);
                 if (!string.IsNullOrWhiteSpace(dataTableNames))
                     writer.WriteAttributeString("OutputTables", dataTableNames.Trim());
 
-                var outputPropertyNames = reader.GetNullableString(StoredProcOrdinals.OutputPropertyNamesCsv);
-
-                var summary = reader.GetNullableString(StoredProcOrdinals.DescriptionText);
-                if (!string.IsNullOrWhiteSpace(summary))
-                    writer.WriteAttributeString("Summary", summary.Trim());
-
-                var remarks = reader.GetNullableString(StoredProcOrdinals.RemarksText);
+                if (!string.IsNullOrWhiteSpace(description))
+                    writer.WriteAttributeString("Summary", description);
                 if (!string.IsNullOrWhiteSpace(remarks))
-                    writer.WriteAttributeString("Remarks", remarks.Trim());
+                    writer.WriteAttributeString("Remarks", remarks);
 
-                var definition = reader.GetString(StoredProcOrdinals.RoutineDefinition);
-
-                using (var command = new SqlCommand(storedProcName, secondConnection) { CommandType = CommandType.StoredProcedure })
+                if (paramLookup.TryGetValue(objectId, out var paramList))
                 {
-                    SqlCommandBuilder.DeriveParameters(command);
-
-                    var returnedOutputs = Array.Empty<string>();
-                    if (!string.IsNullOrWhiteSpace(outputPropertyNames))
-                        returnedOutputs = outputPropertyNames.Trim().Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
-
-                    var defaults = GetOptionalParameters(definition);
-
-                    foreach (SqlParameter parameter in command.Parameters)
+                    foreach (var p in paramList)
                     {
-                        if (parameter.ParameterName.Equals("@RETURN_VALUE", StringComparison.OrdinalIgnoreCase))
-                            continue;
+                        writer.WriteStartElement(p.Name);
 
-                        var parameterName = parameter.ParameterName.TrimStart('@');
-                        writer.WriteStartElement(parameterName);
+                        if (p.Output)
+                            writer.WriteAttributeString("Direction", "InputOutput");
 
-                        if (parameter.Direction != ParameterDirection.Input)
-                            writer.WriteAttributeString("Direction", parameter.Direction.ToString());
+                        writer.WriteAttributeString("Type", p.Type.ToString());
 
-                        writer.WriteAttributeString("Type", parameter.SqlDbType.ToString());
-                        if (parameter.Size > 0)
-                            writer.WriteAttributeString("Length", parameter.Size.ToString());
+                        if (p.Type.MaxLength > 0)
+                            writer.WriteAttributeString("Size", p.Type.MaxLength.ToString());
 
-                        if (Array.IndexOf(returnedOutputs, parameterName) >= 0)
+                        if (p.Output)
                             writer.WriteAttributeString("Return", "true");
 
-                        if (defaults.Contains(parameterName))
+                        if (defaults.Contains(p.Name))
                             writer.WriteAttributeString("Optional", "true");
 
-                        writer.WriteEndElement(); // parameter name
+                        if (p.Type.Table)
+                            writer.WriteAttributeString("Table", "true");
+
+                        writer.WriteEndElement(); // param name
                     }
                 }
 
-
-                writer.WriteEndElement(); // stored proc name
+                writer.WriteEndElement(); // proc name
             }
 
             writer.WriteEndElement(); // StoredProcedures
