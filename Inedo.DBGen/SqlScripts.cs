@@ -6,7 +6,9 @@
 SELECT tab.name,
 	   c.name,
 	   c.is_nullable,
-	   CASE WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name ELSE t2.name END,
+	   CASE WHEN t.name = 'YNINDICATOR' OR t.name LIKE '%_Indicator' THEN 'YNINDICATOR'
+			WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name
+       ELSE t2.name END,
 	   c.max_length
   FROM sys.columns c
        INNER JOIN (SELECT name,
