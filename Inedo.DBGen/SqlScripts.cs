@@ -9,7 +9,13 @@ SELECT tab.name,
 	   CASE WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name ELSE t2.name END,
 	   c.max_length
   FROM sys.columns c
-       INNER JOIN sys.tables tab
+       INNER JOIN (SELECT name,
+	                      object_id
+					 FROM sys.tables innertables
+				   UNION ALL
+				   SELECT name,
+				          object_id
+					 FROM sys.views innerviews) tab
 	           ON tab.object_id = c.object_id
 	   INNER JOIN sys.types t
 	           ON c.user_type_id = t.user_type_id
