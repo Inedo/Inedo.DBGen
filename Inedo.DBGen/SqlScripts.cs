@@ -6,7 +6,7 @@
 SELECT tab.name,
 	   c.name,
 	   c.is_nullable,
-	   CASE WHEN t.name = 'YNINDICATOR' OR t.name LIKE '%_Indicator' THEN 'YNINDICATOR'
+	   CASE WHEN t.name = 'YNINDICATOR' OR c.name LIKE '%\_Indicator' ESCAPE '\' THEN 'YNINDICATOR'
 			WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name
        ELSE t2.name END,
 	   c.max_length
