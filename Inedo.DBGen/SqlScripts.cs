@@ -33,7 +33,6 @@ SELECT p.object_id,
 	   m.definition,
 	   SPI.[ReturnType_Name],
 	   SPI.[DataTableNames_Csv],
-	   SPI.[OutputPropertyNames_Csv],
 	   SPI.[Description_Text],
 	   SPI.[Remarks_Text]
   FROM sys.procedures p
