@@ -1,15 +1,17 @@
-﻿namespace Inedo.Data.CodeGenerator
+﻿namespace Inedo.Data.CodeGenerator;
+
+internal static class SqlScripts
 {
-    internal static class SqlScripts
-    {
-        public const string GetTablesQuery = @"
+    public const string GetTablesQuery = @"
 SELECT tab.name,
 	   c.name,
 	   c.is_nullable,
 	   CASE WHEN t.name = 'YNINDICATOR' OR c.name LIKE '%\_Indicator' ESCAPE '\' THEN 'YNINDICATOR'
 			WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name
        ELSE t2.name END,
-	   c.max_length
+	   c.max_length,
+       c.precision,
+       c.scale
   FROM sys.columns c
        INNER JOIN (SELECT name,
 	                      object_id
@@ -27,7 +29,7 @@ SELECT tab.name,
  WHERE LEFT(tab.name, 2) <> '__'
  ORDER BY tab.name, c.name";
 
-        public const string GetStoredProcsQuery = @"
+    public const string GetStoredProcsQuery = @"
 SELECT p.object_id,
        p.name,
 	   m.definition,
@@ -59,7 +61,7 @@ SELECT p.object_id,
  WHERE p.name <> ''
  ORDER BY p.object_id, p.parameter_id";
 
-        public const string GetUserDefinedTables = @"
+    public const string GetUserDefinedTables = @"
 SELECT type_table_object_id,
        name
   FROM sys.table_types
@@ -67,12 +69,14 @@ SELECT type_table_object_id,
    AND is_table_type = 1
  ORDER BY name";
 
-        public const string GetUserDefinedTableColumns = @"
+    public const string GetUserDefinedTableColumns = @"
 SELECT c.object_id,
 	   c.name,
 	   CASE WHEN t.name = 'YNINDICATOR' OR t2.name IS NULL THEN t.name ELSE t2.name END,
 	   c.max_length,
-	   c.is_nullable
+	   c.is_nullable,
+       c.precision,
+       c.scale
   FROM sys.columns c
        INNER JOIN sys.table_types tt
 	           ON c.object_id = tt.type_table_object_id
@@ -84,5 +88,4 @@ SELECT c.object_id,
  WHERE tt.is_user_defined = 1
    AND tt.is_table_type = 1
  ORDER BY c.object_id, c.column_id";
-    }
 }
