@@ -17,6 +17,11 @@ internal readonly struct DataType
                 this.Scale = scale;
                 this.Precision = precision;
             }
+            else
+            {
+                this.Scale = -1;
+                this.Precision = -1;
+            }
         }
         else
         {
