@@ -4,10 +4,8 @@ using System.Xml;
 
 namespace Inedo.Data.CodeGenerator;
 
-public static class Program
+public static partial class Program
 {
-    private static readonly Regex DefaultArgRegex = new(@"\bCREATE\s+PROCEDURE\s+[^\(]+\((\s*(?<1>@\S+)\s+[a-zA-Z0-9_]+(\([a-zA-Z0-9,]+\))?(?<2>(\s*=\s*[^\s,\)]+)?)\s*(OUT)?\s*,?)*\)\s*AS\s+BEGIN\b", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Singleline);
-
     public static int Main(string[] args)
     {
         var connectionString = readArg("connection-string");
@@ -22,7 +20,7 @@ public static class Program
         Console.WriteLine("done");
         return 0;
 
-        string readArg(string name)
+        string? readArg(string name)
         {
             var value = $"--{name}=";
 
@@ -53,7 +51,7 @@ public static class Program
         );
 
         writer.WriteStartElement("InedoSqlSchema");
-        writer.WriteAttributeString("GeneratorVersion", typeof(Program).Assembly.GetName().Version.ToString());
+        writer.WriteAttributeString("GeneratorVersion", typeof(Program).Assembly.GetName().Version!.ToString());
 
         using (var cmd = new SqlCommand(SqlScripts.GetTablesQuery, conn))
         using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
@@ -83,7 +81,7 @@ public static class Program
     {
         writer.WriteStartElement("Tables");
 
-        string currentTableName = null;
+        string? currentTableName = null;
 
         while (reader.Read())
         {
@@ -147,7 +145,7 @@ public static class Program
 
             if (!columns.TryGetValue(tableId, out var tableColumns))
             {
-                tableColumns = new();
+                tableColumns = [];
                 columns.Add(tableId, tableColumns);
             }
 
@@ -211,7 +209,7 @@ public static class Program
 
             if (!parameters.TryGetValue(objectId, out var paramList))
             {
-                paramList = new();
+                paramList = [];
                 parameters.Add(objectId, paramList);
             }
 
@@ -281,10 +279,10 @@ public static class Program
 
         writer.WriteEndElement(); // StoredProcedures
     }
-    private static HashSet<string> GetOptionalParameters(string storedProcDefinition)
+    private static HashSet<string> GetOptionalParameters(string? storedProcDefinition)
     {
         var parameterDefaults = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var match = DefaultArgRegex.Match(storedProcDefinition);
+        var match = DefaultArgRegex().Match(storedProcDefinition ?? string.Empty);
         if (match.Success)
         {
             for (int i = 0; i < match.Groups[1].Captures.Count; i++)
@@ -298,4 +296,7 @@ public static class Program
 
         return parameterDefaults;
     }
+
+    [GeneratedRegex(@"\bCREATE\s+PROCEDURE\s+[^\(]+\((\s*(?<1>@\S+)\s+[a-zA-Z0-9_]+(\([a-zA-Z0-9,]+\))?(?<2>(\s*=\s*[^\s,\)]+)?)\s*(OUT)?\s*,?)*\)\s*AS\s+BEGIN\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]
+    private static partial Regex DefaultArgRegex();
 }

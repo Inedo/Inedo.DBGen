@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Title>Inedo.DBGen</Title>
     <Authors>Inedo</Authors>
     <Company>Inedo</Company>
     <Product>Inedo.DBGen</Product>
     <Description></Description>
-    <Copyright>Copyright © Inedo 2023</Copyright>
+    <Copyright>Copyright © Inedo 2024</Copyright>
     <OutputType>Exe</OutputType>
     <RootNamespace>Inedo.Data.CodeGenerator</RootNamespace>
     <LangVersion>latest</LangVersion>
@@ -14,8 +14,9 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Inedo.DBGen</PackageId>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
   </ItemGroup>
 </Project>
