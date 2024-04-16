@@ -89,23 +89,27 @@ public static partial class Program
         {
             // query returns data sorted by table name
             var tableName = reader.GetString(Ordinals.Tables.TableName);
+            var columnName = reader.GetString(Ordinals.Tables.ColumnName);
+            bool nullable = reader.GetBoolean(Ordinals.Tables.Nullable);
+            var columnType = reader.GetString(Ordinals.Tables.DataType);
+            int maxLength = reader.GetInt16(Ordinals.Tables.MaxLength);
+            int precision = reader.GetByte(Ordinals.Tables.Precision);
+            int scale = reader.GetByte(Ordinals.Tables.Scale);
+            bool uninclused = reader.GetBoolean(Ordinals.Tables.Uninclused);
+
             if (tableName != currentTableName)
             {
                 if (currentTableName != null)
                     writer.WriteEndElement(); // current table name
 
                 writer.WriteStartElement(tableName);
+                if (uninclused)
+                    writer.WriteAttributeString("Uninclused", "true");
+
                 currentTableName = tableName;
             }
 
-            var columnName = reader.GetString(Ordinals.Tables.ColumnName);
             writer.WriteStartElement(columnName);
-
-            bool nullable = reader.GetBoolean(Ordinals.Tables.Nullable);
-            var columnType = reader.GetString(Ordinals.Tables.DataType);
-            int maxLength = reader.GetInt16(Ordinals.Tables.MaxLength);
-            int precision = reader.GetByte(Ordinals.Tables.Precision);
-            int scale = reader.GetByte(Ordinals.Tables.Scale);
 
             var dataType = new DataType(columnType, maxLength, nullable, scale: scale, precision: precision);
 

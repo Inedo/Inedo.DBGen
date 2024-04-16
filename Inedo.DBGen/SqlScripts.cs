@@ -18,7 +18,8 @@ internal static class SqlScripts
                ELSE t2.name END,
         	   c.max_length,
                c.precision,
-               c.scale
+               c.scale,
+               CAST(CASE WHEN tab.name IN (SELECT [Object_Name] FROM @UninclusedTables) THEN 1 ELSE 0 END AS BIT)
           FROM sys.columns c
                INNER JOIN (SELECT name,
         	                      object_id
@@ -34,7 +35,6 @@ internal static class SqlScripts
         	           ON t2.system_type_id = t.system_type_id
         			  AND t2.user_type_id = t2.system_type_id
          WHERE LEFT(tab.name, 2) <> '__'
-           AND tab.name NOT IN (SELECT [Object_Name] FROM @UninclusedTables)
          ORDER BY tab.name, c.name
         """;
 

@@ -32,6 +32,7 @@ internal static class Ordinals
         public const int MaxLength = 4;
         public const int Precision = 5;
         public const int Scale = 6;
+        public const int Uninclused = 7;
     }
 
     public static class UserDefinedTableColumns
