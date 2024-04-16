@@ -50,4 +50,10 @@ internal static class Ordinals
         public const int TableId = 0;
         public const int TableName = 1;
     }
+
+    public static class ConfigurationColumns
+    {
+        public const int ColumnName = 0;
+        public const int ConfigurationType_Name = 1;
+    }
 }

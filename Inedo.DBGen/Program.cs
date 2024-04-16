@@ -53,10 +53,12 @@ public static partial class Program
         writer.WriteStartElement("InedoSqlSchema");
         writer.WriteAttributeString("GeneratorVersion", typeof(Program).Assembly.GetName().Version!.ToString());
 
+        var configColumns = GetConfigColumns(conn);
+
         using (var cmd = new SqlCommand(SqlScripts.GetTablesQuery, conn))
         using (var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
         {
-            WriteTables(writer, reader);
+            WriteTables(writer, reader, configColumns);
         }
 
         var storedProcParams = ReadStoredProcParams(conn);
@@ -77,7 +79,7 @@ public static partial class Program
 
         writer.WriteEndElement(); // InedoSqlSchema
     }
-    private static void WriteTables(XmlWriter writer, SqlDataReader reader)
+    private static void WriteTables(XmlWriter writer, SqlDataReader reader, Dictionary<ColumnSpecifier, string> configColumns)
     {
         writer.WriteStartElement("Tables");
 
@@ -96,7 +98,8 @@ public static partial class Program
                 currentTableName = tableName;
             }
 
-            writer.WriteStartElement(reader.GetString(Ordinals.Tables.ColumnName));
+            var columnName = reader.GetString(Ordinals.Tables.ColumnName);
+            writer.WriteStartElement(columnName);
 
             bool nullable = reader.GetBoolean(Ordinals.Tables.Nullable);
             var columnType = reader.GetString(Ordinals.Tables.DataType);
@@ -117,6 +120,9 @@ public static partial class Program
                 writer.WriteAttributeString("Scale", dataType.Scale.ToString());
             if (dataType.Precision >= 0)
                 writer.WriteAttributeString("Precision", dataType.Precision.ToString());
+
+            if (configColumns.TryGetValue(new ColumnSpecifier(tableName, columnName), out var configType))
+                writer.WriteAttributeString("ConfigType", configType);
 
             writer.WriteEndElement(); // current column name
         }
@@ -295,6 +301,22 @@ public static partial class Program
         }
 
         return parameterDefaults;
+    }
+    private static Dictionary<ColumnSpecifier, string> GetConfigColumns(SqlConnection conn)
+    {
+        using var cmd = new SqlCommand(SqlScripts.GetConfigurationColumns, conn);
+        using var reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
+
+        var columns = new Dictionary<ColumnSpecifier, string>();
+
+        while (reader.Read())
+        {
+            var columnName = reader.GetString(Ordinals.ConfigurationColumns.ColumnName);
+            var configType = reader.GetString(Ordinals.ConfigurationColumns.ConfigurationType_Name);
+            columns.Add(ColumnSpecifier.Parse(columnName), configType);
+        }
+
+        return columns;
     }
 
     [GeneratedRegex(@"\bCREATE\s+PROCEDURE\s+[^\(]+\((\s*(?<1>@\S+)\s+[a-zA-Z0-9_]+(\([a-zA-Z0-9,]+\))?(?<2>(\s*=\s*[^\s,\)]+)?)\s*(OUT)?\s*,?)*\)\s*AS\s+BEGIN\b", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture | RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant)]

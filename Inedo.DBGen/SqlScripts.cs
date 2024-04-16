@@ -101,4 +101,9 @@ internal static class SqlScripts
            AND tt.is_table_type = 1
          ORDER BY c.object_id, c.column_id
         """;
+
+    public const string GetConfigurationColumns = """
+        SELECT *
+          FROM [__ConfigurationColumns]
+        """;
 }
